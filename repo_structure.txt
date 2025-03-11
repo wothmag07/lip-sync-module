@@ -1,0 +1,231 @@
+.
+├── Docker.installation.md
+├── Dockerfile.cu118.torch2.0.1.py39
+├── Dockerfile.genface
+├── LICENSE
+├── README-zh.md
+├── README.md
+├── assets
+│   ├── geneface++.png
+│   └── webui.png
+├── checkpoints
+│   ├── audio2motion_vae
+│   │   ├── config.yaml
+│   │   ├── file.ipynb
+│   │   └── model_ckpt_steps_400000.ckpt
+│   └── motion2video_nerf
+│       ├── Albert_head
+│       ├── Albert_head_ test1
+│       ├── Donald_head
+│       ├── Donald_torso
+│       ├── May_head
+│       ├── may_head.tar.gz
+│       ├── may_torso
+│       └── may_torso.tar.gz
+├── cs-host-8de95983f3a147dc969af4-833307e8e387.json
+├── data
+│   ├── binary
+│   │   └── videos
+│   ├── processed
+│   │   └── videos
+│   └── raw
+│       ├── val_wavs
+│       └── videos
+├── data_gen
+│   ├── eg3d
+│   │   ├── __pycache__
+│   │   └── convert_to_eg3d_convention.py
+│   ├── runs
+│   │   ├── binarizer_nerf.py
+│   │   └── nerf
+│   └── utils
+│       ├── __pycache__
+│       ├── mp_feature_extractors
+│       ├── path_converter.py
+│       ├── process_audio
+│       └── process_video
+├── data_util
+│   ├── __pycache__
+│   │   └── face3d_helper.cpython-39.pyc
+│   └── face3d_helper.py
+├── deep_3drecon
+│   ├── BFM
+│   │   ├── 01_MorphableModel.mat
+│   │   ├── BFM_exp_idx.mat
+│   │   ├── BFM_front_idx.mat
+│   │   ├── BFM_model_front.mat
+│   │   ├── Exp_Pca.bin
+│   │   ├── facemodel_info.mat
+│   │   ├── index_mp468_from_mesh35709.npy
+│   │   └── std_exp.txt
+│   ├── __pycache__
+│   │   └── secc_renderer.cpython-39.pyc
+│   ├── bfm_left_eye_faces.npy
+│   ├── bfm_right_eye_faces.npy
+│   ├── deep_3drecon_models
+│   │   ├── __pycache__
+│   │   └── bfm.py
+│   ├── ncc_code.npy
+│   ├── secc_renderer.py
+│   └── util
+│       ├── __pycache__
+│       └── mesh_renderer.py
+├── docs
+│   ├── prepare_env
+│   │   ├── install_ext.sh
+│   │   ├── install_guide-zh.md
+│   │   ├── install_guide.md
+│   │   └── requirements.txt
+│   ├── process_data
+│   │   ├── guide-zh.md
+│   │   └── guide.md
+│   └── train_and_infer
+│       ├── guide-zh.md
+│       └── guide.md
+├── egs
+│   ├── datasets
+│   │   ├── Albert
+│   │   ├── Donald
+│   │   └── May
+│   └── egs_bases
+│       └── radnerf
+├── inference
+│   ├── app_genefacepp.py
+│   ├── genefacepp_demo.ipynb
+│   ├── genefacepp_infer.py
+│   └── infer_utils.py
+├── modules
+│   ├── audio2motion
+│   │   ├── cnn_models.py
+│   │   ├── flow_base.py
+│   │   ├── multi_length_disc.py
+│   │   ├── transformer_base.py
+│   │   ├── transformer_models.py
+│   │   ├── utils.py
+│   │   ├── vae.py
+│   │   └── vqvae.py
+│   ├── commons
+│   │   ├── attention
+│   │   ├── conformer
+│   │   ├── conv.py
+│   │   ├── gpt.py
+│   │   ├── improved_diffusion
+│   │   ├── layers.py
+│   │   ├── loralib
+│   │   ├── normalizing_flow
+│   │   ├── rel_transformer.py
+│   │   ├── rnn.py
+│   │   ├── rot_transformer.py
+│   │   ├── taming_tfm_modules.py
+│   │   ├── transformer.py
+│   │   ├── unet1d.py
+│   │   ├── vqvae.py
+│   │   ├── vqvae_cvq.py
+│   │   ├── vqvae_fsq.py
+│   │   ├── vqvae_lfq.py
+│   │   ├── vqvae_lfq_y.py
+│   │   ├── vqvae_taming.py
+│   │   └── wavenet.py
+│   ├── eg3ds
+│   │   ├── camera_utils
+│   │   ├── dnnlib
+│   │   ├── metrics
+│   │   ├── models
+│   │   └── torch_utils
+│   ├── postnet
+│   │   └── lle.py
+│   └── radnerfs
+│       ├── __pycache__
+│       ├── cond_encoder.py
+│       ├── encoders
+│       ├── radnerf.py
+│       ├── radnerf_sr.py
+│       ├── radnerf_torso.py
+│       ├── radnerf_torso_sr.py
+│       ├── raymarching
+│       ├── renderer.py
+│       └── utils.py
+├── repo_structure.txt
+├── tasks
+│   ├── radnerfs
+│   │   ├── __pycache__
+│   │   ├── dataset_utils.py
+│   │   ├── losses.py
+│   │   ├── radnerf.py
+│   │   ├── radnerf_sr.py
+│   │   ├── radnerf_torso.py
+│   │   └── radnerf_torso_sr.py
+│   └── run.py
+├── upgrades
+│   ├── dataset
+│   │   ├── May.mp4
+│   │   ├── Surgicalmask.png
+│   │   ├── augmented_video.mp4
+│   │   ├── bgnoise_may.mp4
+│   │   ├── dimlight.mp4
+│   │   ├── face-tilt.mp4
+│   │   ├── face_occular_mask_video.mp4
+│   │   ├── glasses.png
+│   │   ├── output_audio.wav
+│   │   └── overexposed.mp4
+│   ├── test-scenarios
+│   │   ├── bash.sh
+│   │   ├── dimlight-brightness.py
+│   │   ├── face-tilt.py
+│   │   ├── face-with-occular.py
+│   │   ├── sample.txt
+│   │   ├── scenario1.py
+│   │   ├── scenario2.py
+│   │   ├── scenario3.py
+│   │   └── shape_predictor_68_face_landmarks.dat
+│   ├── test.py
+│   └── texttospeech.py
+└── utils
+    ├── audio
+    │   ├── __init__.py
+    │   ├── __pycache__
+    │   ├── align.py
+    │   ├── dct.py
+    │   ├── griffin_lim.py
+    │   ├── io.py
+    │   ├── pitch
+    │   ├── pitch_extractors.py
+    │   └── vad.py
+    ├── commons
+    │   ├── __pycache__
+    │   ├── base_task.py
+    │   ├── ckpt_utils.py
+    │   ├── crop_head.py
+    │   ├── dataset_utils.py
+    │   ├── ddp_utils.py
+    │   ├── euler2rot.py
+    │   ├── face_alignment_utils.py
+    │   ├── hparams.py
+    │   ├── image_utils.py
+    │   ├── indexed_datasets.py
+    │   ├── mesh_utils.py
+    │   ├── meters.py
+    │   ├── multiprocess_utils.py
+    │   ├── os_utils.py
+    │   ├── pitch_utils.py
+    │   ├── tensor_utils.py
+    │   └── trainer.py
+    ├── nn
+    │   ├── __pycache__
+    │   ├── grad.py
+    │   ├── model_utils.py
+    │   ├── schedulers.py
+    │   └── seq_utils.py
+    ├── useful_cmd_lines
+    │   └── clean_gpu.py
+    └── visualization
+        ├── auto_plot_image.py
+        ├── draw_3d_landmark.py
+        ├── ffmpeg_utils.py
+        ├── lm_visualizer.py
+        ├── plot_attention.py
+        ├── plot_spec.py
+        ├── t-sne.py
+        └── vis_cam3d
+
+85 directories, 143 files
