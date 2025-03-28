@@ -42,6 +42,16 @@ from modules.radnerfs.radnerf_sr import RADNeRFwithSR
 from modules.radnerfs.radnerf_torso import RADNeRFTorso
 from modules.radnerfs.radnerf_torso_sr import RADNeRFTorsowithSR
 
+import logging
+import time
+import google.cloud.texttospeech as tts
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+logging.basicConfig(filename="geneface_performance.log", level=logging.INFO, format="%(asctime)s - %(message)s")
 
 face3d_helper = None
 def vis_cano_lm3d_to_imgs(cano_lm3d, hw=512):
@@ -112,6 +122,30 @@ def inject_blink_to_lm68(lm68, opened_eye_area_percent=0.6, closed_eye_area_perc
                 lm68[idx, 36:48] = lm68[idx, 36:48] * (1-blink_factor) + closed_eye_lm68[idx, 36:48] * blink_factor
                 eye_area_percent[idx] = opened_eye_area_percent * (1-blink_factor) + closed_eye_area_percent * blink_factor
     return lm68, eye_area_percent
+
+
+
+def text_to_wav(language_code: str, voice_name: str, text: str):
+    language_code = "-".join(voice_name.split("-")[:2])
+    text_input = tts.SynthesisInput(text=text)
+    voice_params = tts.VoiceSelectionParams(
+        language_code=language_code, name=voice_name
+    )
+    audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.LINEAR16)
+
+    client = tts.TextToSpeechClient()
+    response = client.synthesize_speech(
+        input=text_input,
+        voice=voice_params,
+        audio_config=audio_config,
+    )
+
+    filename = f"{voice_name}.wav"
+    with open(filename, "wb") as out:
+        out.write(response.audio_content)
+        print(f'Generated speech saved to "{filename}"')
+    
+        return filename
 
 
 class GeneFace2Infer:
@@ -195,15 +229,26 @@ class GeneFace2Infer:
         samples = self.prepare_batch_from_inp(inp)
         out_name = self.forward_system(samples, inp)
         return out_name
-        
+
     def prepare_batch_from_inp(self, inp):
         """
-        :param inp: {'audio_source_name': (str)}
-        :return: a dict that contains the condition feature of NeRF
+        Prepares a batch from the input dictionary.
+
+        :param inp: A dictionary containing input parameters, including the text and voice.
+        :return: A dictionary containing the condition feature of NeRF.
         """
         sample = {}
         # Process Audio
-        self.save_wav16k(inp['drv_audio_name'])
+        text = inp['input_txt']  # Directly use the input text
+
+        if inp['voice'] == 'male':
+            input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp-HD-D", text=text)
+        elif inp['voice'] == 'female':
+            input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp-HD-F", text=text)
+
+        self.save_wav16k(input_audio_file)
+
+        # self.save_wav16k(inp['drv_audio_name'])
         hubert = self.get_hubert(self.wav16k_name)
         t_x = hubert.shape[0]
         x_mask = torch.ones([1, t_x]).float() # mask for audio frames
@@ -517,11 +562,44 @@ class GeneFace2Infer:
         else:
             raise ValueError(f"error running {cmd}, please check ffmpeg installation, especially check whether it supports libx264!")
 
-    @torch.no_grad()
+    '''@torch.no_grad()
     def forward_system(self, batch, inp):
         self.forward_audio2secc(batch, inp)
         self.forward_secc2video(batch, inp)
-        return inp['out_name']
+        return inp['out_name']'''
+    
+
+    @torch.no_grad()
+    def forward_system(self, batch, inp):
+        start_time = time.time()
+        logging.info("Starting inference process.")
+
+        # Audio processing time
+        audio_start = time.time()
+        self.forward_audio2secc(batch, inp)
+        audio_end = time.time()
+        audio_processing_time = audio_end - audio_start
+        logging.info(f"Audio processing time: {audio_processing_time:.2f} sec")
+
+        # Rendering time
+        render_start = time.time()
+        self.forward_secc2video(batch, inp)
+        render_end = time.time()
+        rendering_time = render_end - render_start
+        logging.info(f"Rendering time: {rendering_time:.2f} sec")
+
+        # Overall time
+        total_time = time.time() - start_time
+        logging.info(f"Total pipeline execution time: {total_time:.2f} sec")
+
+        # Compute FPS
+        num_frames = len(batch['poses'])
+        fps = num_frames / rendering_time if rendering_time > 0 else 0
+        logging.info(f"Frame Rendering Speed: {fps:.2f} FPS")
+
+        #return inp['out_name']
+        return inp['out_name'].split('/')[-1]
+
 
     @classmethod
     def example_run(cls, inp=None):
@@ -556,10 +634,12 @@ if __name__ == '__main__':
     parser.add_argument("--head_ckpt", default='') 
     parser.add_argument("--postnet_ckpt", default='') 
     parser.add_argument("--torso_ckpt", default='')
-    parser.add_argument("--drv_aud", default='data/raw/val_wavs/MacronSpeech.wav')
+    # parser.add_argument("--drv_aud", default='data/raw/val_wavs/MacronSpeech.wav')
+    parser.add_argument("--input_txt", default= '',help="input text which will be passed as audio file")
+    parser.add_argument("--voice", default= '',help="gender's voice")
     parser.add_argument("--drv_pose", default='nearest', help="目前仅支持源视频的pose,包括从头开始和指定区间两种,暂时不支持in-the-wild的pose")
-    # parser.add_argument("--blink_mode", default='none') # none | period
-    parser.add_argument("--blink_mode", default='period') # none | period
+    parser.add_argument("--blink_mode", default='none') # none | period
+    # parser.add_argument("--blink_mode", default='period') # none | period
     parser.add_argument("--lle_percent", default=0.2) # nearest | random
     parser.add_argument("--temperature", default=0.2) # nearest | random
     parser.add_argument("--mouth_amp", default=0.4) # nearest | random
@@ -577,8 +657,16 @@ if __name__ == '__main__':
             'postnet_ckpt': args.postnet_ckpt,
             'head_ckpt': args.head_ckpt,
             'torso_ckpt': args.torso_ckpt,
-            'drv_audio_name': args.drv_aud,
+            # 'drv_audio_name': args.drv_aud,
             'drv_pose': args.drv_pose,
+            'input_txt': args.input_txt,
+            'postnet_ckpt': args.postnet_ckpt,
+            'head_ckpt': args.head_ckpt,
+            'torso_ckpt': args.torso_ckpt,
+            # 'drv_audio_name': args.drv_aud,
+            'drv_pose': args.drv_pose,
+            'input_txt': args.input_txt,
+            'voice' : args.voice,
             'blink_mode': args.blink_mode,
             'temperature': float(args.temperature),
             'mouth_amp': args.mouth_amp,

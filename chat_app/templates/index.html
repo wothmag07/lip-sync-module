@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Center the entire layout */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        /* Container for video + chat */
+        .container {
+            width: 800px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: white;
+            border: 2px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        /* Video container */
+        #video-container {
+            width: 100%;
+            height: 60%; /* Takes 60% of space */
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* Ensures proper scaling */
+        }
+
+        /* Chat section */
+        .chat-window {
+            width: 100%;
+            height: 40%; /* Takes 40% of space */
+            background-color: #eaf6ff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #ccc;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .input-area button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .input-area button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .input-area button i {
+            color: #4a76a8;
+        }
+        
+        /* Mic button styles */
+        #mic-button.recording {
+            background-color: #ff4a4a;
+            animation: pulse 1.5s infinite;
+        }
+        
+        #mic-button.recording i {
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 74, 74, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 74, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 74, 74, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Video Section -->
+        <div id="video-container">
+            <video id="idle-video" autoplay loop muted>
+                <source src="/static/sample.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+
+        <!-- Chat Section -->
+        <section class="chat-window">
+            <!-- <button class="close" onclick="toggleChat()"><img src="/static/chat-icon.png" alt="Close Chat"></button> -->
+            <div class="chat-container">
+                <div class="chat" id="llm-output">
+                    <div class="model">
+                        <p>Hi, how can I help you?</p>
+                    </div>
+                </div>
+                <div class="input-area" id="user-input-area">
+                    <input id="user-input" placeholder="Ask me anything..." type="text">
+                    <button id="mic-button" onclick="toggleMicrophone()">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                    </button>
+                    <button onclick="sendMessage()">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="/static/main.js"></script>
+    
+</body>
+</html>

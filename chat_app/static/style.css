@@ -1,0 +1,178 @@
+body {
+    font-family: 'Raleway', sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    flex-direction: column; /* Ensures video and chat are stacked */
+}
+
+/* Wrapper to keep video and chat aligned */
+.container {
+    width: 800px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative; /* Ensures chat stays below the video */
+}
+
+/* Video container */
+#video-container {
+    width: 100%;
+    height: auto;
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Video should fit properly */
+video {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Chat window now positioned properly */
+.chat-window {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 600px;
+    max-height: 80vh; /* Keeps it within viewport */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative; /* Changed from fixed to relative */
+    bottom: 0; /* Resets floating position */
+    right: 0;
+    z-index: 1; /* Keeps it below the video */
+    margin-top: 10px; /* Ensures spacing */
+}
+
+/* Chat messages */
+.chat {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.model, .user {
+    margin: 10px 0;
+}
+
+.model p, .user p {
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+    font-size: 1rem;
+}
+
+.model p {
+    background-color: #e0f7fa;
+    align-self: flex-start;
+}
+
+.user p {
+    background-color: #d1c4e9;
+    align-self: flex-end;
+}
+
+/* Input area */
+.input-area {
+    display: flex;
+    padding: 10px;
+    background-color: #f7f7f7;
+    border-top: 1px solid #ccc;
+}
+
+#user-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 25px;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #4caf50;
+}
+
+button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+button img {
+    width: 30px;
+    height: 30px;
+}
+
+.chat-window {
+    transition: opacity 0.5s ease;
+}
+
+.chat-window.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Tabs & Buttons */
+.tabs {
+    display: flex;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.tab {
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px 5px 0 0;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.tab.active {
+    background-color: #f0f0f0;
+}
+
+#new-tab-button {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 5px 10px;
+}
+
+/* .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    font-size: 20px;
+    color: #888;
+} */
+
+/* Chat Button */
+/* .chat-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    padding: 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-button img {
+    width: 30px;
+    height: 30px;
+} */
