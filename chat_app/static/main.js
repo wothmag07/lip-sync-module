@@ -1,84 +1,69 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const chatWindow = document.querySelector('.chat-window');
-    const chatButton = document.querySelector('.chat-button');
+    const micButton = document.querySelector("#mic-button");
     const videoContainer = document.getElementById('video-container');
-    // Store the original idle video element for reference
     const originalIdleVideo = document.getElementById('idle-video');
-    // We need to keep the idle video separate from the response video
     let idleVideo = originalIdleVideo;
     const userInput = document.getElementById('user-input');
     const llmOutput = document.getElementById('llm-output');
-    
-    // State management
+
     let responseVideoPlaying = false;
-
-    // Start playing the idle video immediately when the page loads
-    idleVideo.play();
-
-    function toggleChat() {
-        chatWindow.classList.toggle('hidden');
-        chatButton.classList.toggle('hidden');
-    }
-
-    // Speech recognition setup
     let recognition = null;
     let isRecording = false;
-    
-    // Initialize speech recognition if browser supports it
+
+    idleVideo.play();
+
     function setupSpeechRecognition() {
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = false;
             recognition.lang = 'en-US';
-            
+
             recognition.onresult = function(event) {
                 const transcript = event.results[0][0].transcript;
+                console.log(event.results)
                 userInput.value = transcript;
                 console.log('Recognized speech:', transcript);
-                
-                // Auto-send the message after a short delay to allow the user to see what was transcribed
+
                 setTimeout(() => {
-                    if (userInput.value.trim() === transcript) {  // Only if the input wasn't changed manually
+                    if (userInput.value.trim() === transcript) {
                         sendMessage();
                     }
                 }, 1000);
             };
-            
+
             recognition.onend = function() {
                 isRecording = false;
-                document.querySelector('#mic-button').classList.remove('recording');
+                micButton.classList.remove('recording');
             };
-            
+
             recognition.onerror = function(event) {
                 console.error('Speech recognition error:', event.error);
                 isRecording = false;
-                document.querySelector('#mic-button').classList.remove('recording');
+                micButton.classList.remove('recording');
             };
         } else {
             console.error('Speech recognition not supported in this browser');
         }
     }
-    
-    // Toggle microphone recording
-    function toggleMicrophone() {
+
+    micButton.addEventListener('click', () => {
         if (!recognition) {
             setupSpeechRecognition();
-            if (!recognition) return; // Exit if speech recognition couldn't be initialized
+            if (!recognition) return;
         }
-        
+
         if (isRecording) {
             recognition.stop();
             isRecording = false;
-            document.querySelector('#mic-button').classList.remove('recording');
+            micButton.classList.remove('recording');
         } else {
             recognition.start();
             isRecording = true;
-            document.querySelector('#mic-button').classList.add('recording');
+            micButton.classList.add('recording');
         }
-    }
+    });
 
-    // Add event listener for Enter key on input field
     userInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -89,21 +74,23 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendMessage() {
         const userMessage = userInput.value.trim();
         if (!userMessage) return;
-        
-        // Append user's message to chat
+
         const userDiv = document.createElement('div');
         userDiv.classList.add('user');
         userDiv.innerHTML = `<p>${userMessage}</p>`;
         llmOutput.appendChild(userDiv);
-
-        // Clear input field
         userInput.value = '';
-        
-        // Auto-scroll chat to bottom
         llmOutput.scrollTop = llmOutput.scrollHeight;
 
-        // Keep the idle video playing while waiting for the response
-        // (idle video should already be playing)
+        // Typing placeholder
+        const loadingDiv = document.createElement('div');
+        loadingDiv.classList.add('model');
+        loadingDiv.setAttribute('id', 'loading');
+        loadingDiv.innerHTML = `<p>Typing<span id="dots"></span></p>`;
+        llmOutput.appendChild(loadingDiv);
+        llmOutput.scrollTop = llmOutput.scrollHeight;
+
+        const stopLoading = startLoadingAnimation();
 
         try {
             const response = await fetch('/chat', {
@@ -116,80 +103,75 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            let data;
-            try {
-                data = await response.json();
-            } catch (jsonError) {
-                throw new Error('Invalid JSON response from server');
-            }
+            const data = await response.json();
 
-            // Append model response to chat
+            stopLoading();
+            loadingDiv.remove();
+
             const modelDiv = document.createElement('div');
             modelDiv.classList.add('model');
             modelDiv.innerHTML = `<p>${data.answer}</p>`;
             llmOutput.appendChild(modelDiv);
-            
-            // Auto-scroll chat to bottom
             llmOutput.scrollTop = llmOutput.scrollHeight;
 
-            // Display the response video if available
             if (data.videoUrl) {
-                // Hide the idle video while response video plays
                 idleVideo.style.display = 'none';
                 idleVideo.pause();
-                
-                // Set flag that response video is playing
                 responseVideoPlaying = true;
-                
-                // Clear any previous response videos (but don't use innerHTML='')
-                // Instead, preserve the idle video and remove all other children
+
                 while (videoContainer.firstChild) {
                     videoContainer.removeChild(videoContainer.firstChild);
                 }
-                
-                // Add the idle video back to the container
+
                 videoContainer.appendChild(idleVideo);
-                
-                // Create new video element for the response
+
                 const videoElement = document.createElement('video');
                 videoElement.src = data.videoUrl;
                 videoElement.controls = true;
                 videoElement.autoplay = true;
                 videoElement.style.width = '100%';
                 videoElement.style.height = '100%';
-                
-                // Add event listener for when response video ends
+
                 videoElement.addEventListener('ended', () => {
-                    // Video finished playing, return to idle state
                     responseVideoPlaying = false;
-                    
-                    // Remove the response video
                     videoElement.remove();
-                    
-                    // Show and play the idle video again
                     idleVideo.style.display = 'block';
-                    idleVideo.currentTime = 0; // Start from beginning
+                    idleVideo.currentTime = 0;
                     idleVideo.play();
                 });
-                
+
                 videoContainer.appendChild(videoElement);
             }
         } catch (error) {
             console.error('Error:', error);
+            stopLoading();
+            loadingDiv.remove();
+
             const errorDiv = document.createElement('div');
             errorDiv.classList.add('model');
             errorDiv.innerHTML = `<p>Sorry, an error occurred: ${error.message}</p>`;
             llmOutput.appendChild(errorDiv);
-            
-            // Auto-scroll chat to bottom
             llmOutput.scrollTop = llmOutput.scrollHeight;
         }
     }
 
-    window.toggleChat = toggleChat;
-    window.toggleMicrophone = toggleMicrophone;
+    function startLoadingAnimation() {
+        const loading = document.getElementById('loading');
+        const dots = document.getElementById('dots');
+        loading.style.display = 'inline-block';
+
+        let dotCount = 0;
+        const interval = setInterval(() => {
+            dotCount = (dotCount + 1) % 4;
+            dots.textContent = '.'.repeat(dotCount);
+        }, 500);
+
+        return () => {
+            clearInterval(interval);
+            if (loading) loading.style.display = 'none';
+            if (dots) dots.textContent = '';
+        };
+    }
+
     window.sendMessage = sendMessage;
-    
-    // Initialize speech recognition when the page loads
-    setupSpeechRecognition();
 });
