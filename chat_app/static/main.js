@@ -10,41 +10,53 @@ document.addEventListener('DOMContentLoaded', () => {
     let recognition = null;
     let isRecording = false;
 
-    idleVideo.play();
+    // Try to autoplay the idle video (may fail on some browsers unless muted)
+    idleVideo.play().catch(err => console.warn('Idle video autoplay failed:', err));
+
+    // Add a warning if speech recognition isn't supported
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+        const warning = document.createElement('div');
+        warning.classList.add('warning');
+        warning.innerHTML = `<p>Your browser does not support speech recognition. Please use Chrome or Edge for voice input.</p>`;
+        document.body.prepend(warning);
+        micButton.disabled = true;
+        micButton.title = 'Speech recognition not supported in this browser.';
+    }
 
     function setupSpeechRecognition() {
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                console.log(event.results)
-                userInput.value = transcript;
-                console.log('Recognized speech:', transcript);
-
-                setTimeout(() => {
-                    if (userInput.value.trim() === transcript) {
-                        sendMessage();
-                    }
-                }, 1000);
-            };
-
-            recognition.onend = function() {
-                isRecording = false;
-                micButton.classList.remove('recording');
-            };
-
-            recognition.onerror = function(event) {
-                console.error('Speech recognition error:', event.error);
-                isRecording = false;
-                micButton.classList.remove('recording');
-            };
-        } else {
-            console.error('Speech recognition not supported in this browser');
+        if (!SpeechRecognition) {
+            return;
         }
+
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            userInput.value = transcript;
+            console.log('Recognized speech:', transcript);
+
+            setTimeout(() => {
+                if (userInput.value.trim() === transcript) {
+                    sendMessage();
+                }
+            }, 1000);
+        };
+
+        recognition.onend = function() {
+            isRecording = false;
+            micButton.classList.remove('recording');
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error:', event.error);
+            isRecording = false;
+            micButton.classList.remove('recording');
+        };
     }
 
     micButton.addEventListener('click', () => {
@@ -53,14 +65,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!recognition) return;
         }
 
-        if (isRecording) {
-            recognition.stop();
-            isRecording = false;
-            micButton.classList.remove('recording');
-        } else {
-            recognition.start();
-            isRecording = true;
-            micButton.classList.add('recording');
+        try {
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                micButton.classList.remove('recording');
+            } else {
+                recognition.start();
+                isRecording = true;
+                micButton.classList.add('recording');
+            }
+        } catch (err) {
+            console.error('Speech recognition start error:', err);
         }
     });
 
@@ -75,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const userMessage = userInput.value.trim();
         if (!userMessage) return;
 
+        // Display user message
         const userDiv = document.createElement('div');
         userDiv.classList.add('user');
         userDiv.innerHTML = `<p>${userMessage}</p>`;
@@ -82,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userInput.value = '';
         llmOutput.scrollTop = llmOutput.scrollHeight;
 
-        // Typing placeholder
+        // Typing/loading indicator
         const loadingDiv = document.createElement('div');
         loadingDiv.classList.add('model');
         loadingDiv.setAttribute('id', 'loading');
@@ -114,16 +131,13 @@ document.addEventListener('DOMContentLoaded', () => {
             llmOutput.appendChild(modelDiv);
             llmOutput.scrollTop = llmOutput.scrollHeight;
 
+            // Handle video response
             if (data.videoUrl) {
-                idleVideo.style.display = 'none';
                 idleVideo.pause();
+                idleVideo.style.display = 'none';
                 responseVideoPlaying = true;
 
-                while (videoContainer.firstChild) {
-                    videoContainer.removeChild(videoContainer.firstChild);
-                }
-
-                videoContainer.appendChild(idleVideo);
+                videoContainer.replaceChildren(); // clear all children
 
                 const videoElement = document.createElement('video');
                 videoElement.src = data.videoUrl;
@@ -135,13 +149,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 videoElement.addEventListener('ended', () => {
                     responseVideoPlaying = false;
                     videoElement.remove();
+                    videoContainer.appendChild(idleVideo);
                     idleVideo.style.display = 'block';
                     idleVideo.currentTime = 0;
-                    idleVideo.play();
+                    idleVideo.play().catch(err => console.warn('Idle video autoplay failed:', err));
                 });
 
                 videoContainer.appendChild(videoElement);
             }
+
         } catch (error) {
             console.error('Error:', error);
             stopLoading();
@@ -163,7 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let dotCount = 0;
         const interval = setInterval(() => {
             dotCount = (dotCount + 1) % 4;
-            dots.textContent = '.'.repeat(dotCount);
+            if (dots) {
+                dots.textContent = '.'.repeat(dotCount);
+            }
         }, 500);
 
         return () => {

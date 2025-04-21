@@ -242,9 +242,11 @@ class GeneFace2Infer:
         text = inp['input_txt']  # Directly use the input text
 
         if inp['voice'] == 'male':
-            input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp-HD-D", text=text)
+            # input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp-HD-D", text=text)
+            input_audio_file = text_to_wav(language_code='en-US', voice_name="⁠en-US-Chirp3-HD-Orus", text=text)
         elif inp['voice'] == 'female':
-            input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp-HD-F", text=text)
+            # input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp-HD-F", text=text)
+            input_audio_file = text_to_wav(language_code='en-US', voice_name="en-US-Chirp3-HD-Zephyr", text=text)
 
         self.save_wav16k(input_audio_file)
 

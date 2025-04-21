@@ -1,27 +1,76 @@
-FROM ubuntu22.04-cu118-conda:torch2.0.1-py39 
+FROM ubuntu22.04-cu118-conda:torch2.0.1-py39
 
-# Make RUN commands use the new environment:
-SHELL ["conda", "run", "-n", "pytorch", "/bin/bash", "-c"]
 
-RUN conda install conda-forge::ffmpeg # ffmpeg with libx264 codec to turn images to video
+# Set environment variables
+ENV CUDA_HOME=/usr/local/cuda-11.8
+ENV PATH=$CUDA_HOME/bin:$PATH
+ENV LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 
-# torch2.0.1+cuda11.8 is recommended , cuda11.8 is compatible with RTX 4090.
-# And torch=2.1+cuda12.1 will cause error of torch-ngp 
-RUN conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia
+# Use conda environment shell
+SHELL ["conda", "run", "-n", "geneface", "/bin/bash", "-c"]
 
-# install mmcv by mim
+# Ensure ffmpeg is installed with codec support
+RUN conda install -c conda-forge ffmpeg
+
+# Clean up potentially conflicting MKL versions
+RUN conda remove --force mkl mkl-service intel-openmp -y || true
+
+
+# Install PyTorch + CUDA + MKL stack (with compatible versions)
+RUN conda install \
+    pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 \
+    mkl=2021.4.0 mkl-service=2.4.0 intel-openmp=2021.4.0 \
+    -c pytorch -c nvidia -c conda-forge
+
+RUN python -c "import torch; print('Torch version:', torch.__version__)"
+
+
+# Confirm installed versions (for debugging)
+RUN conda list | grep -E "mkl|intel"
+
+# Install pytorch3d and mmcv via mim
 RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" && \
-    pip install chardet cython openmim==0.3.9 && \ 
-    mim install mmcv==2.1.0 
+    pip install chardet cython openmim==0.3.9 && \
+    mim install mmcv==2.1.0
 
+# Copy codebase
 COPY . /workspace
 WORKDIR /workspace
 
-# other dependencies
-RUN apt update -y && apt-get install -y libasound2-dev portaudio19-dev libgl1 && \
-    pip install -r docs/prepare_env/requirements.txt -v
+# Install system dependencies and Python requirements
+RUN apt update -y && apt-get install -y --no-install-recommends build-essential cmake libasound2-dev portaudio19-dev libgl1 && rm -rf /var/lib/apt/lists/*
+
+RUN python -c "import torch; print('Torch version:', torch.__version__)"
 
 
-# install torch-ngp extension
-RUN bash docs/prepare_env/install_ext.sh 
+RUN pip install -r docs/prepare_env/requirements.txt -v
 
+# Pin setuptools *after* requirements.txt install, before custom extensions
+RUN pip install "setuptools==60.2.0" --force-reinstall
+
+# --- Reinstall correct PyTorch version AFTER pip installs ---
+RUN echo "--- Reinstalling correct PyTorch version ---"
+RUN conda install -y \
+    pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 \
+    -c pytorch -c nvidia -c conda-forge --force-reinstall
+RUN echo "--- Finished reinstalling PyTorch ---"
+# --- End Reinstall ---
+
+# --- Add Diagnostics ---
+RUN echo "--- Checking CUDA and PyTorch versions ---"
+RUN nvcc --version | grep "release"
+RUN python -c "import torch; print('PyTorch version:', torch.__version__); print('PyTorch CUDA version:', torch.version.cuda); print('CUDA available:', torch.cuda.is_available()); print('CUDA device count:', torch.cuda.device_count())"
+RUN echo "--- End Diagnostics ---"
+# --- End Diagnostics ---
+
+# --- Check Compiler Version ---
+RUN echo "--- Checking GCC/G++ version ---"
+RUN gcc --version && g++ --version
+RUN echo "--- End Compiler Check ---"
+# --- End Compiler Check ---
+
+# Install torch-ngp extension
+RUN bash docs/prepare_env/install_ext.sh
+
+# [Optional] Test PyTorch import to ensure MKL issues are fixed
+RUN python -c "import torch; print('Torch version:', torch.__version__)"

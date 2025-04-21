@@ -1,6 +1,7 @@
 fastapi
-uvicorn
+uvicorn[standard]
+python-dotenv
 jinja2
 google-generativeai
 google-cloud-texttospeech
-python-dotenv
+transformers==4.26.1

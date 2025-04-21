@@ -5,7 +5,7 @@ ARG UBUNTU_VERSION="22.04"
 # Base NVidia CUDA Ubuntu image
 FROM nvidia/cuda:$CUDA_VERSION-cudnn$CUDNN_VERSION-devel-ubuntu$UBUNTU_VERSION AS base
 
-ENV HOME /root
+ENV HOME=/root
 WORKDIR $HOME
 ENV PYTHON_VERSION=3.9.18
 ENV PATH="/usr/local/cuda/bin:${PATH}"
@@ -30,7 +30,7 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     && rm -f Miniconda3-latest-Linux-x86_64.sh
 
 # Make base conda environment
-ENV CONDA=pytorch
+ENV CONDA=geneface
 RUN conda create -n "${CONDA}" python="${PYTHON_VERSION}"
 ENV PATH="${HOME}/miniconda3/envs/${CONDA}/bin:${BASEPATH}"
 

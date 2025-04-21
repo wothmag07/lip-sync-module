@@ -1,0 +1,21 @@
+FROM genfaceplus:latest
+
+SHELL ["conda", "run", "-n", "geneface", "/bin/bash", "-c"]
+
+
+# Copy chat app files
+COPY chat_app /workspace/chat_app
+
+# Install chat app dependencies
+RUN conda run -n geneface pip install -r /workspace/chat_app/requirements.txt
+
+# Expose port (default for Uvicorn is 8000)
+EXPOSE 8000
+
+# Command to run the application
+# Use 0.0.0.0 to make it accessible from outside the container
+CMD ["uvicorn", "chat_app.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+
+
+
